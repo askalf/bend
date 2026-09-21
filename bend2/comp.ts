@@ -163,7 +163,16 @@ const BOX: Lay = { ks: ["box"], arms: null };
 
 const W64: Lay = { ks: ["w64"], arms: null };
 
-const WORDS: Record<string, Lay> = { U32: W32, F32: W32, Nat: W64 };
+// A datatype's name indexes this table, so it has a null prototype:
+// `__proto__` or `toString` would otherwise inherit a value that is not
+// a Lay, like OPERATIONS and OPTIMIZED below.
+const WORDS: Record<string, Lay> = Object.setPrototypeOf(
+  { U32: W32, F32: W32, Nat: W64 }, null);
+
+// The printed cell kind of a datatype the runtime knows, 7 for any
+// other: a datatype's name indexes it, so it is null-prototyped too.
+const SHOWN: Record<string, number> = Object.setPrototypeOf(
+  { U32: 0, F32: 1, Nat: 2, Char: 3, String: 4, Array: 6 }, null);
 
 // The widest flat datatype: the shader's Tri is 24 words.
 const WIDE = 256;
@@ -1301,8 +1310,7 @@ function show_main(book: Bend.Book): Show | null {
     if (adt === null || adt.k === "IO.OP" || tld?.$ !== "ADT") {
       return refuse();
     }
-    const kind = { U32: 0, F32: 1, Nat: 2, Char: 3, String: 4, Array: 6 }[adt.k]
-      ?? 7;
+    const kind = SHOWN[adt.k] ?? 7;
     const id = show.cells.push(kind) - 1;
     ids.set(key, id);
     const refs: [number, HTerm, Lay][] = [];
